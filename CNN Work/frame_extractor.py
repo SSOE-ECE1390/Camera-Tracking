@@ -1,11 +1,11 @@
 import cv2, os, glob
 
-IN_DIR = "raw_videos"
+IN_DIR = "raw_data"
 OUT_DIR = "redcar_data/images_all"
 os.makedirs(OUT_DIR, exist_ok=True)
 EVERY_N = 5  # extract every 5th frame
 
-for vp in glob.glob(os.path.join(IN_DIR, "*.mp4")):
+for vp in glob.glob(os.path.join(IN_DIR, "*.MOV")):
     cap = cv2.VideoCapture(vp)
     base = os.path.splitext(os.path.basename(vp))[0]
     i = kept = 0
