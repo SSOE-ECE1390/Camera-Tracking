@@ -2,9 +2,14 @@ import cv2
 from pathlib import Path
 import glob
 
-IMG_DIR = Path(r"C:/Users/nickl/Camera-Tracking/CNN Work/redcar_data/images_all")
-LBL_DIR = Path(r"C:/Users/nickl/Camera-Tracking/CNN Work/redcar_data/labels_all")
-OUT_DIR = Path(r"C:/Users/nickl/Camera-Tracking/CNN Work/redcar_data/preview_all")
+# IMG_DIR = Path(r"C:/Users/nickl/Camera-Tracking/CNN Work/redcar_data/images_all")
+# LBL_DIR = Path(r"C:/Users/nickl/Camera-Tracking/CNN Work/redcar_data/labels_all")
+# OUT_DIR = Path(r"C:/Users/nickl/Camera-Tracking/CNN Work/redcar_data/preview_all")
+
+#Colton File Path 
+IMG_DIR = Path(r"C:/Users/colto/OneDrive - University of Pittsburgh/Documents/GitHub/Camera-Tracking/CNN Work/redcar_data/images_all")
+LBL_DIR = Path(r"C:/Users/colto/OneDrive - University of Pittsburgh/Documents/GitHub/Camera-Tracking/CNN Work/redcar_data/labels_all")
+OUT_DIR = Path(r"C:/Users/colto/OneDrive - University of Pittsburgh/Documents/GitHub/Camera-Tracking/CNN Work/redcar_data/preview_all")
 
 
 OUT_DIR.mkdir(parents=True, exist_ok=True)

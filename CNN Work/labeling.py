@@ -17,9 +17,23 @@ def main(args):
 
     model = YOLO(args.model)  
 
-    img_paths = sorted(glob.glob(os.path.join(img_dir, "*.jpg")) +
-                       glob.glob(os.path.join(img_dir, "*.png")) +
-                       glob.glob(os.path.join(img_dir, "*.jpeg")))
+    # img_paths = sorted(glob.glob(os.path.join(img_dir, "*.jpg")) +
+    #                    glob.glob(os.path.join(img_dir, "*.png")) +
+    #                    glob.glob(os.path.join(img_dir, "*.jpeg")))
+
+    #Had to change the file path to this because images were not being found. 
+    #Also you have to be in the CNN Working Dir for it to run correctly
+    img_dir = os.path.abspath(args.image_dir)  # ensures full absolute path
+
+    img_paths = sorted([
+        os.path.join(img_dir, f)
+        for f in os.listdir(img_dir)
+        if f.lower().endswith(('.jpg', '.jpeg', '.png'))
+    ])
+    print(f"[INFO] Found {len(img_paths)} images")
+    for p in img_paths:
+        print("  ", p)
+
 
     kept = 0
     for ip in img_paths:
@@ -39,6 +53,7 @@ def main(args):
         boxes = res.boxes.xyxy.cpu().numpy()
         clss  = res.boxes.cls.cpu().numpy()
 
+        car_data = []
         lines = []
         for (x1,y1,x2,y2), c in zip(boxes, clss):
             if int(c) != 2:
@@ -53,13 +68,35 @@ def main(args):
             crop = img[y1i:y2i, x1i:x2i]
             rr = red_ratio(crop, sat_min=args.sat_min, val_min=args.val_min)
 
-            cls_id = 0 if rr >= args.red_thresh else 1  
+            #cls_id = 0 if rr >= args.red_thresh else 1  
 
             cx = ((x1i + x2i) / 2.0) / w
             cy = ((y1i + y2i) / 2.0) / h
             bw = (x2i - x1i) / w
             bh = (y2i - y1i) / h
-            lines.append(f"{cls_id} {cx:.6f} {cy:.6f} {bw:.6f} {bh:.6f}")
+            
+            ##Added in
+            car_data.append({'red_ratio': rr,
+                             'coords': (cx, cy, bw, bh),
+                             'box': (x1i, y1i, x2i, y2i)})
+        #debug
+        if not car_data:
+            print(f"No cars detected or filltered out {ip}")
+
+        if car_data:
+            #debug
+            print(f"Red ratios for {ip}: {[round(car['red_ratio'], 4) for car in car_data]}")
+            #finding the largest ratio of red and limiting it so only 1 car can be labled red
+            red_ratios = [car['red_ratio'] for car in car_data]
+            reddest_index = red_ratios.index(max(red_ratios))
+
+            for i, car in enumerate(car_data):
+                if i == reddest_index and car['red_ratio'] >= args.red_thresh:
+                    cls_id = 0 
+                else:
+                    cls_id = 1 #other cars
+                cx,cy,bw,bh = car['coords']
+                lines.append(f"{cls_id} {cx:.6f} {cy:.6f} {bw:.6f} {bh:.6f}")
 
         base = os.path.splitext(os.path.basename(ip))[0]
         with open(os.path.join(out_lbl, base + ".txt"), "w") as f:
