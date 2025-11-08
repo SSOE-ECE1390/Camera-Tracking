@@ -2,7 +2,11 @@ import os, glob, argparse, cv2, numpy as np
 from ultralytics import YOLO
 
 def red_ratio(bgr, sat_min=70, val_min=50):
+    #Converting the BGR Image to HSV
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    #Red loops back around in HSV so have to find lower red and higher reds
+    #Hue is the color, Saturation is how much white is added (Lower more white), 
+    # Value is how much black is added (Lower more black).
     lower1 = np.array([0,   sat_min, val_min])
     upper1 = np.array([10,  255,     255])
     lower2 = np.array([170, sat_min, val_min])
@@ -41,15 +45,22 @@ def main(args):
         if img is None:
             print(f"[skip] cannot read {ip}")
             continue
+        #Take the first 2 entries Height and width but leave color
         h, w = img.shape[:2]
 
+        #Running model Only mark a car if it 25% confident or more
+        #IoU Intersection over Union allow lables to overlap by only 50%
+        #The prediction returns a list of different image predictions. That is because
+        #you can load multiple images at the same time each pred_list[] entry is a new
+        #prediction for a new image. We only use 1 image so 0th entry only.
         res = model.predict(img, conf=args.conf, iou=0.5, verbose=False)[0]
         if res.boxes is None:
             # write empty label file
             base = os.path.splitext(os.path.basename(ip))[0]
             open(os.path.join(out_lbl, base + ".txt"), "w").close()
             continue
-
+        
+        #list of bounding boxes and class ids (Cars ID = 2)
         boxes = res.boxes.xyxy.cpu().numpy()
         clss  = res.boxes.cls.cpu().numpy()
 
