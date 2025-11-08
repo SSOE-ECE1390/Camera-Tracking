@@ -1,4 +1,9 @@
-# Camera Tracking
+# CNN and Lucas Kanade Camera Tracking Pipeline
+
+<p align="left">
+  <img src="Resources/IPP.gif" alt="Pipeline Demo" width="800">
+</p>
+
 ### Team Members
 Brian Bartley, bmb187@pitt.edu <br>
 Colton Frankenberry, cof29@pitt.edu <br>
