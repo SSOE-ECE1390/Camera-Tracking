@@ -1,3 +1,6 @@
+# Brian Bartley
+# Lizza Novikova
+
 from scipy.interpolate import RectBivariateSpline
 import matplotlib.pyplot as plt
 import numpy as np
