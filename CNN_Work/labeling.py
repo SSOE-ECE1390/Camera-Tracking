@@ -14,29 +14,11 @@ def red_ratio(bgr, sat_min=70, val_min=50):
     mask = cv2.inRange(hsv, lower1, upper1) | cv2.inRange(hsv, lower2, upper2)
     return (mask > 0).mean()
 
-def main(args):
-    img_dir = args.image_dir
-    out_lbl = args.labels_dir
-    os.makedirs(out_lbl, exist_ok=True)
+def main(Image):
 
     model = YOLO(args.model)  
 
-    # img_paths = sorted(glob.glob(os.path.join(img_dir, "*.jpg")) +
-    #                    glob.glob(os.path.join(img_dir, "*.png")) +
-    #                    glob.glob(os.path.join(img_dir, "*.jpeg")))
-
-    #Had to change the file path to this because images were not being found. 
-    #Also you have to be in the CNN Working Dir for it to run correctly
-    img_dir = os.path.abspath(args.image_dir)  # ensures full absolute path
-
-    img_paths = sorted([
-        os.path.join(img_dir, f)
-        for f in os.listdir(img_dir)
-        if f.lower().endswith(('.jpg', '.jpeg', '.png'))
-    ])
-    print(f"[INFO] Found {len(img_paths)} images")
-    for p in img_paths:
-        print("  ", p)
+    
 
 
     kept = 0
