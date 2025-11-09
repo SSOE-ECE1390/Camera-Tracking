@@ -29,6 +29,11 @@ def InverseCompositionAffine(prevImage, currImage, boundingBox):
     # computing the gradient
     Ix = prevImage.ev(Y, X, dy=1)
     Iy = prevImage.ev(Y, X, dx=1)
+    # flattening all relevant arrays
+    X = X.ravel()
+    Y = Y.ravel()
+    Ix = Ix.ravel()
+    Iy = Iy.ravel()
     # evaluating the jacobian and hessian
     A = np.vstack((Ix * X, Ix * Y, Ix, Iy * X, Iy * Y, Iy)).T
     H = A.T @ A
