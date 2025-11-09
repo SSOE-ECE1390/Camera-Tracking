@@ -30,18 +30,23 @@ def main():
     ''' MAIN LOOP '''
     base = "CNN_Work/redcar_data"
     idx = 0
+    CNN_FREQUENCY = 60  # runn CNN every 60 iteratiosn
 
     for (i, img_path) in enumerate(os.listdir(f"{base}/images_all/")):
         print(f"{i}: {base}/images_all/{img_path}")
         # read in new im
         curr_img = cv2.imread(f"{base}/images_all/{img_path}")
-        
-        # do LK tracking stuff
-        # curr_bounding = LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)
 
-        # assign old to new
+        # if time for CNN, do CNN, else compare and update lucas kanade
+        if idx % CNN_FREQUENCY:
+            curr_bounding = CNN.lb(curr_img)
+        else:
+            curr_bounding = LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)
+            disp_img = CNN.draw_boxes(curr_img, curr_bounding)
+
+        # assign curr to prev
         prev_img = curr_img
-        # prev_bounding = curr_bounding
+        prev_bounding = curr_bounding
 
 if __name__ == "__main__":
     main()
