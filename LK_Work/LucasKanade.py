@@ -11,6 +11,9 @@ defined by top left and bottom right coordinates. Returns the new bounding box.
 '''
 
 def LucasKanadeTracker(prevImage,currImage,boundingBox):
+    # converting to grayscale
+    prevImage = np.mean(prevImage, axis=2)
+    currImage = np.mean(currImage, axis=2)
     # setting up the threshold
     x1,y1,x2,y2 = boundingBox
     threshold = 0.01875
