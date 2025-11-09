@@ -14,98 +14,74 @@ def red_ratio(bgr, sat_min=70, val_min=50):
     mask = cv2.inRange(hsv, lower1, upper1) | cv2.inRange(hsv, lower2, upper2)
     return (mask > 0).mean()
 
-def main(Image):
+def main(Image, model_path="yolov8n.pt", conf=0.25, red_thresh=0.10, sat_min=70, val_min=50):
 
-    model = YOLO(args.model)  
+    model = YOLO(model_path)  
+    #Take the first 2 entries Height and width but leave color
+    h, w = Image.shape[:2]
 
+    #Running model Only mark a car if it 25% confident or more
+    #IoU Intersection over Union allow lables to overlap by only 50%
+    #The prediction returns a list of different image predictions. That is because
+    #you can load multiple images at the same time each pred_list[] entry is a new
+    #prediction for a new image. We only use 1 image so 0th entry only.
+    res = model.predict(Image, conf=conf, iou=0.5, verbose=False)[0]
+    if res.boxes is None:
+        #If the CNN finds nothing return null to the main script
+        print("A Car could not be found")
+        return None
+    print("Something was fond")
     
+    #list of bounding boxes and class ids (Cars ID = 2)
+    boxes = res.boxes.xyxy.cpu().numpy()
+    clss  = res.boxes.cls.cpu().numpy()
 
-
-    kept = 0
-    for ip in img_paths:
-        img = cv2.imread(ip)
-        if img is None:
-            print(f"[skip] cannot read {ip}")
+    car_data = []
+    for (x1,y1,x2,y2), c in zip(boxes, clss):
+        if int(c) != 2:
             continue
-        #Take the first 2 entries Height and width but leave color
-        h, w = img.shape[:2]
-
-        #Running model Only mark a car if it 25% confident or more
-        #IoU Intersection over Union allow lables to overlap by only 50%
-        #The prediction returns a list of different image predictions. That is because
-        #you can load multiple images at the same time each pred_list[] entry is a new
-        #prediction for a new image. We only use 1 image so 0th entry only.
-        res = model.predict(img, conf=args.conf, iou=0.5, verbose=False)[0]
-        if res.boxes is None:
-            # write empty label file
-            base = os.path.splitext(os.path.basename(ip))[0]
-            open(os.path.join(out_lbl, base + ".txt"), "w").close()
-            continue
+        else:
+            print("A car was found")
         
-        #list of bounding boxes and class ids (Cars ID = 2)
-        boxes = res.boxes.xyxy.cpu().numpy()
-        clss  = res.boxes.cls.cpu().numpy()
+        #Top left = (x1i, y1i), bottom right = (x2i, y2i)
+        x1i, y1i, x2i, y2i = map(int, [x1,y1,x2,y2])
+        x1i = max(0, x1i); y1i = max(0, y1i)
+        x2i = min(w-1, x2i); y2i = min(h-1, y2i)
+        if x2i <= x1i or y2i <= y1i:
+            continue
 
-        car_data = []
-        lines = []
-        for (x1,y1,x2,y2), c in zip(boxes, clss):
-            if int(c) != 2:
-                continue
+        crop = Image[y1i:y2i, x1i:x2i]
+        rr = red_ratio(crop, sat_min=sat_min, val_min=val_min)
+        
+        ##Added in
+        car_data.append({'red_ratio': rr,
+                         'box': (x1i, y1i, x2i, y2i)})
+    #debug
+    if not car_data:
+        return None
 
-            x1i, y1i, x2i, y2i = map(int, [x1,y1,x2,y2])
-            x1i = max(0, x1i); y1i = max(0, y1i)
-            x2i = min(w-1, x2i); y2i = min(h-1, y2i)
-            if x2i <= x1i or y2i <= y1i:
-                continue
+    if car_data:
+        #finding the largest ratio of red and limiting it so only 1 car can be labled red
+        max_red_ratio = -1
+        reddest_box = None
 
-            crop = img[y1i:y2i, x1i:x2i]
-            rr = red_ratio(crop, sat_min=args.sat_min, val_min=args.val_min)
+        for car in car_data:
+            if car['red_ratio'] > max_red_ratio:
+                #For red car brian wants output format
+                max_red_ratio = car['red_ratio']
+                reddest_box = car['box']
 
-            #cls_id = 0 if rr >= args.red_thresh else 1  
+        #Return the max red box coordinates
+        if max_red_ratio >= red_thresh:
+            print("Redest box coords", reddest_box)
+            return reddest_box
+        else: 
+            return None
+                
 
-            cx = ((x1i + x2i) / 2.0) / w
-            cy = ((y1i + y2i) / 2.0) / h
-            bw = (x2i - x1i) / w
-            bh = (y2i - y1i) / h
-            
-            ##Added in
-            car_data.append({'red_ratio': rr,
-                             'coords': (cx, cy, bw, bh),
-                             'box': (x1i, y1i, x2i, y2i)})
-        #debug
-        if not car_data:
-            print(f"No cars detected or filltered out {ip}")
+    #     base = os.path.splitext(os.path.basename(ip))[0]
+    #     with open(os.path.join(out_lbl, base + ".txt"), "w") as f:
+    #         f.write("\n".join(lines))
+    #     kept += 1
 
-        if car_data:
-            #debug
-            print(f"Red ratios for {ip}: {[round(car['red_ratio'], 4) for car in car_data]}")
-            #finding the largest ratio of red and limiting it so only 1 car can be labled red
-            red_ratios = [car['red_ratio'] for car in car_data]
-            reddest_index = red_ratios.index(max(red_ratios))
-
-            for i, car in enumerate(car_data):
-                if i == reddest_index and car['red_ratio'] >= args.red_thresh:
-                    cls_id = 0 
-                else:
-                    cls_id = 1 #other cars
-                cx,cy,bw,bh = car['coords']
-                lines.append(f"{cls_id} {cx:.6f} {cy:.6f} {bw:.6f} {bh:.6f}")
-
-        base = os.path.splitext(os.path.basename(ip))[0]
-        with open(os.path.join(out_lbl, base + ".txt"), "w") as f:
-            f.write("\n".join(lines))
-        kept += 1
-
-    print(f"done. wrote labels for {kept} images to: {out_lbl}")
-
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--image_dir", default="redcar_data/images_all", help="folder of frames")
-    ap.add_argument("--labels_dir", default="redcar_data/labels_all", help="where to write YOLO txts")
-    ap.add_argument("--model", default="yolov8n.pt", help="COCO-pretrained YOLO model")
-    ap.add_argument("--conf", type=float, default=0.25, help="detection confidence threshold")
-    ap.add_argument("--red_thresh", type=float, default=0.10, help="fraction of red pixels to call red_car")
-    ap.add_argument("--sat_min", type=int, default=70, help="HSV S lower bound")
-    ap.add_argument("--val_min", type=int, default=50, help="HSV V lower bound")
-    args = ap.parse_args()
-    main(args)
+    # print(f"done. wrote labels for {kept} images to: {out_lbl}")
