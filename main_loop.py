@@ -1,9 +1,13 @@
 import os, glob, argparse, cv2, numpy as np
 from pathlib import Path
+import matplotlib.pyplot as plt
 import LK_Work.LucasKanade as LK
 import CNN_Work as CNN
 
 def main():
+
+    plt.ion()
+    fig,ax = plt.subplots()
 
     ''' FRAME EXTRACTING '''
     # # extract frames from video to CNN_Work/redcar_data/images_all and labels to CNN_Work/redcar_data/labels_all
@@ -30,18 +34,33 @@ def main():
     ''' MAIN LOOP '''
     base = "CNN_Work/redcar_data"
     idx = 0
+    CNN_FREQUENCY = 60  # runn CNN every 60 iteratiosn
 
     for (i, img_path) in enumerate(os.listdir(f"{base}/images_all/")):
         print(f"{i}: {base}/images_all/{img_path}")
         # read in new im
         curr_img = cv2.imread(f"{base}/images_all/{img_path}")
-        
-        # do LK tracking stuff
-        # curr_bounding = LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)
 
-        # assign old to new
+        # if time for CNN, do CNN, else compare and update lucas kanade
+        if i % CNN_FREQUENCY == 0:
+            curr_bounding = CNN.lb(curr_img)
+            if (curr_bounding is None):
+                continue
+        else:
+            curr_bounding = LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)
+        
+        disp_img = CNN.draw_boxes(curr_img, curr_bounding)
+
+        # assign curr to prev
         prev_img = curr_img
-        # prev_bounding = curr_bounding
+        prev_bounding = curr_bounding
+        
+        ax.imshow(disp_img[:,:,::-1])
+        plt.pause(0.05)
+        ax.clear()
+
+    plt.ioff()
+    plt.show()
 
 if __name__ == "__main__":
     main()
