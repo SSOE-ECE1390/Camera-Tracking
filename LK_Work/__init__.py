@@ -1,1 +1,2 @@
 from .LucasKanade import LucasKanadeTracker
+from .InverseLucasKanadeAffine import InverseCompositionAffine

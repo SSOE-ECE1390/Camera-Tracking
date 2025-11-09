@@ -2,6 +2,7 @@ import os, glob, argparse, cv2, numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 import LK_Work.LucasKanade as LK
+import LK_Work.InverseLucasKanadeAffine as invLK
 import CNN_Work as CNN
 
 def main():
@@ -49,7 +50,8 @@ def main():
             if (curr_bounding is None):
                 continue
         else:
-            curr_bounding = tuple(map(int, LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)))
+            # curr_bounding = tuple(map(int, LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)))
+            curr_bounding = tuple(map(int, invLK.InverseCompositionAffine(prev_img, curr_img, prev_bounding)))
             print(f"LK box: {curr_bounding}")
         disp_img = CNN.draw_boxes(curr_img, curr_bounding)
 
