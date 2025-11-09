@@ -37,18 +37,20 @@ def main():
     CNN_FREQUENCY = 60  # runn CNN every 60 iteratiosn
 
     for (i, img_path) in enumerate(os.listdir(f"{base}/images_all/")):
-        print(f"{i}: {base}/images_all/{img_path}")
+        # print(f"{i}: {base}/images_all/{img_path}")
+        print(i)
         # read in new im
         curr_img = cv2.imread(f"{base}/images_all/{img_path}")
 
         # if time for CNN, do CNN, else compare and update lucas kanade
         if i % CNN_FREQUENCY == 0:
             curr_bounding = CNN.lb(curr_img)
+            print(f"CNN box: {curr_bounding}")
             if (curr_bounding is None):
                 continue
         else:
-            curr_bounding = LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)
-        
+            curr_bounding = tuple(map(int, LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)))
+            print(f"LK box: {curr_bounding}")
         disp_img = CNN.draw_boxes(curr_img, curr_bounding)
 
         # assign curr to prev
