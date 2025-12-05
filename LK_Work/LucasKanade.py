@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 '''
-Lucas Kanade Tracker implementation. Takes previous image, current image and the bounding box 
+Lucas Kanade implementation. Takes previous image, current image and the bounding box 
 defined by top left and bottom right coordinates. Returns the new bounding box.
 '''
 
