@@ -12,7 +12,11 @@ def red_ratio(bgr, sat_min=70, val_min=50):
     lower2 = np.array([170, sat_min, val_min])
     upper2 = np.array([180, 255,     255])
     mask = cv2.inRange(hsv, lower1, upper1) | cv2.inRange(hsv, lower2, upper2)
-    return (mask > 0).mean()
+
+    numRed = np.count_nonzero(mask)
+    total_pixels = mask.size
+
+    return numRed / total_pixels
 
 def main(Image, model_path="yolov8n.pt", conf=0.25, red_thresh=0.10, sat_min=70, val_min=50):
 
