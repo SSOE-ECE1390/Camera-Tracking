@@ -2,9 +2,10 @@ import cv2
 from pathlib import Path
 import glob
 
-
-
-
+# draw boxes takes an image (img) and a set of box coordinates (x1, y1, x2, y2).
+# It draws a red box and the label "red_car" on the image at those coordinates.
+# If box_coords is None, it returns None. Otherwise, it returns the image with
+# the box and label drawn on it.
 
 def draw_boxes(img, box_coords):
     h, w = img.shape[:2]
