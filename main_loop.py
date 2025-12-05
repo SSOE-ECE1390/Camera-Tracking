@@ -48,7 +48,7 @@ def main():
                 continue
         else:
             curr_bounding = LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)
-        
+        curr_bounding = [int(v) for v in curr_bounding]
         disp_img = CNN.draw_boxes(curr_img, curr_bounding)
 
         # assign curr to prev
