@@ -12,11 +12,15 @@ Elizabeth Novikova, eln46@pitt.edu <br>
 ### Description
 Developing a video camera object tracking algorithm to track an object and keep it in frame
 ### Milestones
-1) Train CNN to detect and classify objects in camera feed
-2) Draw bounding boxes around detected objects
-3) For each bounding box, extract key feature points (e.g. corners and edges)
-4) Use Lucas-Kanade optical flow to track key feature points from frame to frame
-5) Update bounding box position based on tracked feature movement
-6) Periodically (every so many frames) rerun CNN to correct drift from Lucas-Kanade
-7) Loop program
-8) (Time allowing) Develop camera hardware
+1) Use a pre-trained CNN to detect and classify objects in camera feed
+2) Adjust parameters within CNN to fit the tracked object
+3) Draw bounding boxes around detected objects
+4) For each bounding box, pass into selected LK algorithim
+5) Use Lucas-Kanade optical flow to track key feature points from frame to frame
+6) Update bounding box position based on tracked feature movement
+7) Periodically (every so many frames) rerun CNN to correct drift from Lucas-Kanade
+8) Loop program
+9) (Time allowing) Develop camera hardware
+
+### Running Our Program
+To run our program, run the file main_loop.py.
