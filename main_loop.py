@@ -2,20 +2,28 @@ import os, glob, argparse, cv2, numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 import LK_Work.LucasKanade as LK
+import LK_Work.InverseLucasKanadeAffine as invLK
 import CNN_Work as CNN
 
+''' SET THESE PARAMETERS BEFORE RUNNING '''
 DO_FRAME_EXTRACING = False  # toggle this to true to run on new video feed [MUST BE SET TO TRUE ON FIRST RUN WITH NEW DATA]
+LK_TYPE = "LK"  # use "LK" for standard Lucas-Kanade tracking, or "invLK" for Inverse Lucas-Kanade Affine
+
 CNN_FREQUENCY = 60  # sets the frame interval for CNN runs bewteen LK
 
 '''
 MAIN LOOP FUNCTION: Combines Lucas-Kanade and CNN algorithms to implement tracking framework.
                     If doFrameExtracing parameter is set to True, the frame extracing procedure is done prior to the tracking.
+                    The Lucas-Kanade method is determined by the string passed in the LKtype param
+
 INPUTS:
 doFrameExtracing: boolean, toggles FRAME EXTRACING procedure to pre-process new video frames
+LKtype: string, toggles standard ("LK") or inverse Lucas-Kanade ("invLK")
+
 OUTPUTS:
 None, but displays images as algorithm computes them      
 '''
-def main(doFrameExtracting):
+def main(doFrameExtracting, LKtype):
 
     plt.ion()
     fig,ax = plt.subplots()
@@ -23,7 +31,8 @@ def main(doFrameExtracting):
     ''' FRAME EXTRACTING '''
     if doFrameExtracting:
         # extract frames from video to CNN_Work/redcar_data/images_all and labels to CNN_Work/redcar_data/labels_all
-        IN_DIR = "CNN_Work/raw_data"
+        print("[PRE-PROCESS] Runnning frame extracting and pre-processing")
+        IN_DIR = "CNN_Work/raw_data"        
         OUT_DIR = "CNN_Work/redcar_data/images_all"
         os.makedirs(OUT_DIR, exist_ok=True)
         EVERY_N = 5
@@ -41,25 +50,38 @@ def main(doFrameExtracting):
                     kept += 1
                 i += 1
             cap.release()
-        print("done")
+        print("[PRE-PROCESS] done")
 
     ''' MAIN LOOP '''
     base = "CNN_Work/redcar_data"
     idx = 0
-    
 
-    for (i, img_path) in enumerate(os.listdir(f"{base}/images_all/")):
-        print(f"{i}: {base}/images_all/{img_path}")
+    img_dir = os.listdir(f"{base}/images_all/")
+    if not img_dir:
+        raise FileNotFoundError("Directory is empty, add data to [CNN_work/raw_data] and run program with frame extracting enabled.")
+    else:
+        print("[PRE-PROCESS] Images successfully found in directory.")
+
+    for (i, img_path) in enumerate(img_dir):
         # read in new im
         curr_img = cv2.imread(f"{base}/images_all/{img_path}")
 
         # if time for CNN, do CNN, else compare and update lucas kanade
         if i % CNN_FREQUENCY == 0:
+            print(f"[LOOP] Running CNN on frame {i+1}")
             curr_bounding = CNN.lb(curr_img)
             if (curr_bounding is None):
                 continue
         else:
-            curr_bounding = LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)
+            if LKtype == "LK":
+                print(f"[LOOP] Running LK on frame {i+1}")
+                curr_bounding = LK.LucasKanadeTracker(prev_img, curr_img, prev_bounding)
+            elif LKtype == "invLK":
+                print(f"Running inverse LK on frame {i+1}")
+                curr_bounding = invLK.InverseCompositionAffine(prev_img, curr_img, prev_bounding)
+            else:
+                raise ValueError("No Lucas Kanade type selected or invalid type given.")
+            
         curr_bounding = [int(v) for v in curr_bounding]
         disp_img = CNN.draw_boxes(curr_img, curr_bounding)
 
@@ -75,5 +97,6 @@ def main(doFrameExtracting):
     plt.show()
 
 if __name__ == "__main__":
-    doFrameExtracing = False
-    main(doFrameExtracing)
+    doFrameExtracing = DO_FRAME_EXTRACING
+    LKtype = LK_TYPE
+    main(doFrameExtracing, LKtype)
