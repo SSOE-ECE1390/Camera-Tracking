@@ -21,7 +21,7 @@ doFrameExtracing: boolean, toggles FRAME EXTRACING procedure to pre-process new 
 LKtype: string, toggles standard ("LK") or inverse Lucas-Kanade ("invLK")
 
 OUTPUTS:
-None, but displays images as algorithm computes them      
+None, but displays tracked images as algorithm computes them      
 '''
 def main(doFrameExtracting, LKtype):
 
@@ -56,9 +56,14 @@ def main(doFrameExtracting, LKtype):
     base = "CNN_Work/redcar_data"
     idx = 0
 
+    if not os.path.isdir(base):
+        raise FileNotFoundError("Base directory does not exist, add data to \x1B[3mCNN_work/raw_data\x1B[0m and run program with frame extracting enabled to create.")
+    else:
+        print("[PRE-PROCESS] Base directory successfully found.")
+
     img_dir = os.listdir(f"{base}/images_all/")
     if not img_dir:
-        raise FileNotFoundError("Directory is empty, add data to [CNN_work/raw_data] and run program with frame extracting enabled.")
+        raise FileNotFoundError("Directory is empty, add data to \x1B[3mCNN_work/raw_data\x1B[0m and run program with frame extracting enabled.")
     else:
         print("[PRE-PROCESS] Images successfully found in directory.")
 
